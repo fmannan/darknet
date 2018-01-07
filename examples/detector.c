@@ -1,4 +1,9 @@
 #include "darknet.h"
+#include <string.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 
@@ -577,9 +582,25 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     char *input = buff;
     int j;
     float nms=.3;
+    int state = 0; // normal state
+    DIR *dp = NULL;
+    struct dirent *ep;
+    char outpath[1024];
+    outpath[0] = NULL;
+    struct stat path_stat;
+    strncpy(outpath, outfile, 256);
     while(1){
+      if(state == 0) {
         if(filename){
-            strncpy(input, filename, 256);
+	  // if filename contains path to a directory then load all the files in it
+	  stat(filename, &path_stat);
+	  if(S_ISDIR(path_stat.st_mode)) {
+	    printf("%s is a directory.\n", filename);
+	    state = 1;
+	    dp = opendir(filename);
+	    continue;
+	  }
+          strncpy(input, filename, 256);
         } else {
             printf("Enter Image Path: ");
             fflush(stdout);
@@ -587,6 +608,34 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
             if(!input) return;
             strtok(input, "\n");
         }
+      } else if(state == 1) { // processing a directory
+	ep = readdir(dp);
+	if(ep == NULL) {
+	  closedir(dp);
+	  break;
+	}
+	strncpy(input, ep->d_name, 256);
+	printf("Checking file: %s\n", input);
+	if(strstr(input, "tiff") == NULL && strstr(input, "png") == NULL &&
+	   strstr(input, "jpg") == NULL) {
+	  printf("Skipping file: %s\n", input);
+	  //printf("%s\n", strstr(input, "tiff"));
+	  continue;
+	}
+	strncpy(input, filename, 256);
+	char tmp[256];
+	strncpy(tmp, ep->d_name, 256);
+	strcat(input, tmp);
+	printf("Fullpath: %s\n", input);
+	// construct outfile name
+	strncpy(outpath, outfile, 256);
+	stat(outfile, &path_stat);
+	if(!S_ISDIR(path_stat.st_mode)) {
+	  mkdir(outfile, 700);
+	}
+	strcat(outpath, tmp);
+	printf("Output filename: %s|%s|%s\n", outpath, outfile, filename);
+      }
         image im = load_image_color(input,0,0);
         image sized = letterbox_image(im, net->w, net->h);
         //image sized = resize_image(im, net->w, net->h);
@@ -612,8 +661,8 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, masks, names, alphabet, l.classes);
-        if(outfile){
-            save_image(im, outfile);
+        if(outpath){
+	  save_image(im, outpath);
         }
         else{
             save_image(im, "predictions");
@@ -632,7 +681,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         free_image(sized);
         free(boxes);
         free_ptrs((void **)probs, l.w*l.h*l.n);
-        if (filename) break;
+        if (filename && state == 0) break;
     }
 }
 
