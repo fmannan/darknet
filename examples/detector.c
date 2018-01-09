@@ -578,17 +578,18 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     set_batch_network(net, 1);
     srand(2222222);
     double time;
-    char buff[256];
+    const int BUFFER_LEN = 2048;
+    char buff[BUFFER_LEN];
     char *input = buff;
     int j;
     float nms=.3;
     int state = 0; // normal state
     DIR *dp = NULL;
     struct dirent *ep;
-    char outpath[1024];
+    char outpath[BUFFER_LEN];
     outpath[0] = NULL;
     struct stat path_stat;
-    strncpy(outpath, outfile, 256);
+    strcpy(outpath, outfile);
     while(1){
       if(state == 0) {
         if(filename){
@@ -600,7 +601,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 	    dp = opendir(filename);
 	    continue;
 	  }
-          strncpy(input, filename, 256);
+          strcpy(input, filename);
         } else {
             printf("Enter Image Path: ");
             fflush(stdout);
@@ -614,7 +615,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 	  closedir(dp);
 	  break;
 	}
-	strncpy(input, ep->d_name, 256);
+	strcpy(input, ep->d_name);
 	printf("Checking file: %s\n", input);
 	if(strstr(input, "tiff") == NULL && strstr(input, "png") == NULL &&
 	   strstr(input, "jpg") == NULL) {
@@ -622,16 +623,18 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 	  //printf("%s\n", strstr(input, "tiff"));
 	  continue;
 	}
-	strncpy(input, filename, 256);
-	char tmp[256];
-	strncpy(tmp, ep->d_name, 256);
+	strcpy(input, filename);
+	char tmp[1024];
+	strcpy(tmp, ep->d_name);
 	strcat(input, tmp);
 	printf("Fullpath: %s\n", input);
 	// construct outfile name
-	strncpy(outpath, outfile, 256);
-	stat(outfile, &path_stat);
-	if(!S_ISDIR(path_stat.st_mode)) {
-	  mkdir(outfile, 700);
+	strcpy(outpath, outfile);
+
+	DIR* outdir = opendir(outfile);
+	if(outdir == NULL) {
+	  printf("creating directory %s\n", outfile);
+	  mkdir(outfile, ACCESSPERMS);
 	}
 	strcat(outpath, tmp);
 	printf("Output filename: %s|%s|%s\n", outpath, outfile, filename);
