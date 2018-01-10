@@ -7,6 +7,18 @@
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 
+char* remove_ext(char* str) {
+  int l = strlen(str);
+  while(l >= 0) {
+    if(str[l] == '.') {
+      str[l] = '\0';
+      break;
+    }
+    l--;
+  }
+  return str;
+}
+
 void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
 {
     list *options = read_data_cfg(datacfg);
@@ -587,7 +599,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     DIR *dp = NULL;
     struct dirent *ep;
     char outpath[BUFFER_LEN];
-    outpath[0] = NULL;
+    outpath[0] = '\0';
     struct stat path_stat;
     strcpy(outpath, outfile);
     while(1){
@@ -620,7 +632,6 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 	if(strstr(input, "tiff") == NULL && strstr(input, "png") == NULL &&
 	   strstr(input, "jpg") == NULL) {
 	  printf("Skipping file: %s\n", input);
-	  //printf("%s\n", strstr(input, "tiff"));
 	  continue;
 	}
 	strcpy(input, filename);
@@ -636,6 +647,8 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 	  printf("creating directory %s\n", outfile);
 	  mkdir(outfile, ACCESSPERMS);
 	}
+	// remove filename extension from tmp
+	remove_ext(tmp);
 	strcat(outpath, tmp);
 	printf("Output filename: %s|%s|%s\n", outpath, outfile, filename);
       }
@@ -664,7 +677,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, masks, names, alphabet, l.classes);
-        if(outpath){
+        if(outpath[0] != '\0'){
 	  save_image(im, outpath);
         }
         else{
