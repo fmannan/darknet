@@ -1,0 +1,5 @@
+classes = 6
+train = capb_train.txt
+test = capb_test.txt
+names = street6.names
+backup = /mnt/data3/training/yolov3_capb/
