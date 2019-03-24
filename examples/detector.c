@@ -7,7 +7,6 @@
 
 static int coco_ids[] = {1,2,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,27,28,31,32,33,34,35,36,37,38,39,40,41,42,43,44,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,67,70,72,73,74,75,76,77,78,79,80,81,82,84,85,86,87,88,89,90};
 
-//<<<<<<< HEAD
 char* remove_ext(char* str) {
   int l = strlen(str);
   while(l >= 0) {
@@ -19,8 +18,6 @@ char* remove_ext(char* str) {
   }
   return str;
 }
-//=======
-//>>>>>>> 61c9d02ec461e30d55762ec7669d6a1d3c356fb2
 
 void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear)
 {
@@ -583,17 +580,16 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     list *options = read_data_cfg(datacfg);
     char *name_list = option_find_str(options, "names", "data/names.list");
     char **names = get_labels(name_list);
-
     image **alphabet = load_alphabet();
     network *net = load_network(cfgfile, weightfile, 0);
+
     set_batch_network(net, 1);
     srand(2222222);
     double time;
     const int BUFFER_LEN = 2048;
     char buff[BUFFER_LEN];
     char *input = buff;
-    //<<<<<<< HEAD
-    int j;
+
     float nms=.45; //.3;
     int state = 0; // normal state
     DIR *dp = NULL;
@@ -601,10 +597,12 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
     char outpath[BUFFER_LEN];
     outpath[0] = '\0';
     struct stat path_stat;
+    if(strlen(outfile) == 0) {
+      printf("Specify an output directory\n");
+      return;
+    }
     strcpy(outpath, outfile);
-/* ======= */
-/*     float nms=.45; */
-/* >>>>>>> 61c9d02ec461e30d55762ec7669d6a1d3c356fb2 */
+
     while(1){
       if(state == 0) {
         if(filename){
@@ -670,20 +668,12 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         printf("%s: Predicted in %f seconds.\n", input, what_time_is_it_now()-time);
         int nboxes = 0;
         detection *dets = get_network_boxes(net, im.w, im.h, thresh, hier_thresh, 0, 1, &nboxes);
-        //printf("%d\n", nboxes);
-        //if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-/* <<<<<<< HEAD */
-/*         if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms); */
-/*         draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, masks, names, alphabet, l.classes); */
-/*         if(outpath[0] != '\0'){ */
-/* 	  save_image(im, outpath); */
-/* ======= */
+
         if (nms) do_nms_sort(dets, nboxes, l.classes, nms);
         draw_detections(im, dets, nboxes, thresh, names, alphabet, l.classes);
         free_detections(dets, nboxes);
-        if(outfile[0] != '\0'){
-            save_image(im, outfile);
-	    //>>>>>>> 61c9d02ec461e30d55762ec7669d6a1d3c356fb2
+        if(outpath[0] != '\0'){
+            save_image(im, outpath);
         }
         else{
             save_image(im, "predictions");
@@ -695,13 +685,7 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
 
         free_image(im);
         free_image(sized);
-/* <<<<<<< HEAD */
-/*         free(boxes); */
-/*         free_ptrs((void **)probs, l.w*l.h*l.n); */
-/*         if (filename && state == 0) break; */
-/* ======= */
-        if (filename) break;
-	//>>>>>>> 61c9d02ec461e30d55762ec7669d6a1d3c356fb2
+        if (filename && state == 0) break;
     }
 }
 
