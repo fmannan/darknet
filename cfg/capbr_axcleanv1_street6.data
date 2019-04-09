@@ -1,6 +1,9 @@
 classes= 6
-train  = /mnt/data/tfrecs/street6/darknet/axmai_all/axmai_all.txt
-valid  = /mnt/data/tfrecs/street6/darknet/axmai_all/axmai_all.txt
+train  = /mnt/data/tfrecs/street6/darknet/capbr_axcleanv1_street6_train.txt
+valid  = /mnt/data/tfrecs/street6/darknet/capbr_axcleanv1_street6_val.txt
 names = data/street6.names
-backup = /mnt/data3/darknet_street6_tmp_training
+backup = /mnt/data3/darknet_capbr_axcleanv1_street6_training
+results = capbr_val_results
+eval = coco
+
 
