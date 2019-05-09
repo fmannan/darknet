@@ -502,14 +502,16 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     fprintf(stderr, "Total Detection Time: %f Seconds\n", what_time_is_it_now() - start);
 }
 
-void validate_detector_recall(char *cfgfile, char *weightfile)
+void validate_detector_recall(char *datacfg, char *cfgfile, char *weightfile)
 {
+  list *options = read_data_cfg(datacfg);
     network *net = load_network(cfgfile, weightfile, 0);
     set_batch_network(net, 1);
     fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
-    list *plist = get_paths("data/coco_val_5k.list");
+    char *valid_images = option_find_str(options, "valid", "data/test.list");
+    list *plist = get_paths(valid_images);
     char **paths = (char **)list_to_array(plist);
 
     layer l = net->layers[net->n-1];
@@ -567,7 +569,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
             }
         }
 
-        fprintf(stderr, "%5d %5d %5d\tRPs/Img: %.2f\tIOU: %.2f%%\tRecall:%.2f%%\n", i, correct, total, (float)proposals/(i+1), avg_iou*100/total, 100.*correct/total);
+        fprintf(stderr, "%5d %5d %5d %f\tRPs/Img: %.2f\tIOU: %.2f%%\tRecall:%.2f%%\n", i, correct, total, avg_iou, (float)proposals/(i+1), 100.0*avg_iou/total, 100.*correct/total);
         free(id);
         free_image(orig);
         free_image(sized);
@@ -864,7 +866,7 @@ void run_detector(int argc, char **argv)
     int frame_skip = find_int_arg(argc, argv, "-s", 0);
     int avg = find_int_arg(argc, argv, "-avg", 3);
     if(argc < 4){
-        fprintf(stderr, "usage: %s %s [train/test/valid] [xyz.data] [cfg] [weights (optional)]\n", argv[0], argv[1]);
+        fprintf(stderr, "usage: %s %s [train/test/valid/recall] [xyz.data] [cfg] [weights (optional)]\n", argv[0], argv[1]);
         return;
     }
     char *gpu_list = find_char_arg(argc, argv, "-gpus", 0);
@@ -906,7 +908,7 @@ void run_detector(int argc, char **argv)
     else if(0==strcmp(argv[2], "train")) train_detector(datacfg, cfg, weights, gpus, ngpus, clear);
     else if(0==strcmp(argv[2], "valid")) validate_detector(datacfg, cfg, weights, outfile);
     else if(0==strcmp(argv[2], "valid2")) validate_detector_flip(datacfg, cfg, weights, outfile);
-    else if(0==strcmp(argv[2], "recall")) validate_detector_recall(cfg, weights);
+    else if(0==strcmp(argv[2], "recall")) validate_detector_recall(datacfg, cfg, weights);
     else if(0==strcmp(argv[2], "demo")) {
         list *options = read_data_cfg(datacfg);
         int classes = option_find_int(options, "classes", 20);

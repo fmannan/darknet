@@ -132,7 +132,7 @@ image tile_images(image a, image b, int dx)
 image get_label(image **characters, char *string, int size)
 {
     size = size/10;
-    if(size > 7) size = 7;
+    if(size > 5) size = 5;
     image label = make_empty_image(0,0,0);
     while(*string){
         image l = characters[size][(int)*string];
@@ -292,7 +292,7 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
 
             draw_box_width(im, left, top, right, bot, width, red, green, blue);
             if (alphabet) {
-	        int label_size = fmax(10., fmin(18.,  im.h * 0.03));
+	        int label_size = fmax(8., fmin(12.,  im.h * 0.03));
                 image label = get_label(alphabet, labelstr, label_size);
                 draw_label(im, top + width, left, label, rgb);
                 free_image(label);

@@ -178,7 +178,11 @@ float box_union(box a, box b)
 
 float box_iou(box a, box b)
 {
-    return box_intersection(a, b)/box_union(a, b);
+  float intersection_area = box_intersection(a, b);
+  if(intersection_area < 1e-8) return 0.;
+  float area_union = box_union(a, b);
+  if(area_union < 1e-8) return 0.0;
+  return box_intersection(a, b)/box_union(a, b);
 }
 
 float box_rmse(box a, box b)
